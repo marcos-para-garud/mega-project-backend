@@ -16,7 +16,9 @@ export const uploadOnCloudinary = async (localFilePath)=>{
         resource_type: "auto",
         }
         )
-        console.log("File is uploaded on cloudinary" + response.url);
+        // console.log("File is uploaded on cloudinary" + response.url);
+
+        fs.unlinkSync(localFilePath) // after loading the avatar and coverImage , we are unlinking local path from cloudinary 
         return response
         
     } catch (error) {
