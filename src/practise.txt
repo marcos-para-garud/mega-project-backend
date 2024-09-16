@@ -1,0 +1,301 @@
+// src/db/index.js
+import dotenv from "dotenv"
+import mongoose from "mongoose"
+
+dotenv.config()
+
+const connectDatabase = async()=>{
+
+
+    try{
+        const connectionInstance = mongoose.connect(procee.env.MONGOOSE_URL)
+    }catch(error){
+        console.log("database not connected");
+    }
+}
+
+export default connectDatabase;
+
+// src/index.js
+
+import dotenv from dotenv;
+import connectDatabase from ./src/db/index.js
+import app from "app.js"
+
+connectDatabase()
+.then((response)=>{
+    app.listen(process.env.PORT || 8000 ,()=>{
+        console.log(server is connected to mongoose at 8000)
+    } )
+    
+})
+.catch{
+    console.log("error")
+}
+
+
+// app.js
+
+import express from "express"
+import cookieParser from "cookie-parser"
+import cors from "cors";
+
+
+const app = express()
+
+app.use(cors());
+app.use(cookieParser());
+app.use(express.static("public"));
+app.use(express.urlencoded());
+app.use(express.json());
+
+export default app;
+
+//apiError
+
+class apiError extends Error{
+    constructor(
+        statusCode,
+        message,
+        errors[]
+    ){
+        super(message)
+        this.statusCode= statusCode
+        this.message= message
+    }
+}
+
+export default apiError;
+
+//asyncHandler
+
+const asyncHandler =  (handler)=> async (req , res , next)=>{
+    try{
+        await handler(req , res , next);
+    }catch(error){
+        console.log("unexpected error")
+        return res.status(500).json({
+            success: false,
+            message: "something went wrong"
+        }
+        )
+    }
+}
+
+//cloudinary
+
+import cloudinary from "cloudinary"
+import fs from "fs"
+
+  // Configuration
+    cloudinary.config({ 
+        cloud_name: 'ddcpjscjl', 
+        api_key: '846798416631992', 
+        api_secret: '<your_api_secret>' // Click 'View API Keys' above to copy your API secret
+    });
+
+    const ImageUpload = async (filePath)=>{
+        if(!filePath) return null;
+        try{
+            const uploadResult = await cloudinary.uploader
+       .upload(
+           filePath, {
+               resource_type: "auto",
+           }
+       )
+
+       fs.unlink(filePath)
+       
+        }catch(error){
+            fs.unlink(filePath)
+            console.log(error)
+        }
+    }
+
+
+    //multer
+
+const express = require('express')
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })
+import app from "app";
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, '/public/temp')
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.orignalName)
+  }
+})
+
+const upload = multer({ storage: storage })
+
+
+// video.model
+
+//user.model
+
+userSchema.pre("save" , async ()=>{
+   if(!this.isModified('password')) return next();
+
+   this.password = await bcrypt.hash(this.password , 10)
+   next();
+})
+
+userSchema.methods.isPasswordCorrect = async (password)=>{
+    return bcrypt.compare(this.password , password);
+}
+
+userSchema.methods.generateAccessToken = async ()=>{
+    jwt.sign({
+        _id,
+        username,
+        fullname,
+        password
+    },
+    process.env.ACCESS_TOKEN,
+    {
+        expireson: 1d,
+    })
+}
+
+
+//controller
+
+import asyncHandler from "asyncHandler"
+
+
+const register = asyncHandler( req , res)=>{
+    try{
+        const {username , password , fullname , email} = req.body;
+
+        if(!username || !password || !fullname || !email)
+        {
+            throw new apiError( 400 , "All fields mandetory")
+        }
+
+        const user = await User.findOne({email})
+
+        if(user)
+        {
+             throw new apiError( 400 , "user already exist")
+        }
+       let avatarPath = null;
+       if(req.file!=null && req.file.avatar!= null && req.file.avatar.length>0)
+       {
+        avatarPath = req.file.avatar[0].path;
+       }
+
+       let profilpicpath = null;
+       if(req.file!=null && req.file.profilpic!= null && req.file.profilpic.length>0)
+       {
+        profilpicpath = req.file.profilpic[0].path;
+       }
+       if(!avatarPath)
+       {
+        throw new apiError( 400 , "no avatar path")
+       }
+
+       const uploadavatar = await uploadoncloudinary(avatarPath)
+       const uploadprofilepic = await uploadoncloudinary(profilpicpath)
+
+       user.create({
+        username,
+        password,
+        fullname,
+        email,
+
+       })
+    }
+    
+}
+
+//login
+const login = asyncHandler( (req , res)=>{
+    const {username , password , email} = req.body;
+    if(!username || !password || !email)
+    {
+        throw new apiError(404 , "all fields are required")
+    }
+
+    const user = await User.findOne({email});
+    if(!user){
+        throw new apiError(404, "user not signedup")
+    }
+
+    const isCorrect = await isPasswordCorrect(password)
+    if(!isCorrect){
+        throw new apiError(404 , "password incorrect")
+    }
+    const accessToken = await generateAccessToken();
+    const refreshToken = await generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    user.save();
+
+    res.cookie("accessToken" , accessToken , {
+        httponly: true,
+        secure: true
+    })
+    res.cookie("refreshToken" , refreshToken , {
+        httponly: true,
+        secure: true
+    })
+
+    res.status(201).json({
+        success: true,
+        status: 201,
+        user,
+        accessToken
+    })
+
+})
+
+
+//logout
+
+const logout = asyncHandler( (req , res) =>{
+    const {refreshToken} = req.cookie;
+    if(!refreshToken){
+        throw new apiError(409 , "Already Logged out")
+    }
+
+    const user = await User.findOne({refreshToken})
+    user.refreshToken = null;
+    user.save();
+
+    res.clearcookie("accessToken" , {
+        httpsonly: true,
+        secure: true
+    })
+
+    res.clearcookie("refreshToken" , {
+        httpsonly: true,
+        secure: true
+    })
+
+    res.status(202).send()
+})
+
+//auth middleware
+
+const authMiddleware = asyncHandler((req , res , next)=>{
+    const token = req.cookie.accessToken || req.header["authorization"]
+
+    if(!token)
+    {
+        throw new apiError(404 , "token not generated")
+    }
+
+    const decoded = jwt.verify(token , process.env.ACCESS_TOKEN)
+
+    const user = await User.findbyId(decoded._id).select("-password -refreshToken")
+
+    if(!user){
+        throw new apiError(404 , "token not generated")
+    }
+
+    req.user = user
+})

@@ -13,8 +13,8 @@ const authMiddleware = asyncHandler( async( req , res , next)=>{
             throw new apiError(411 , "access denied, no token provided")
         }
         const decoded = jwt.verify(token , process.env.ACCESS_TOKEN_SECRET)
-        req.user = decoded
-        const user = await User.findById(req.user._id).select("-password -refreshToken")
+        
+        const user = await User.findById(decoded._id).select("-password -refreshToken")
         if(!user){
             throw new apiError(412 , "usernot found")
         }
