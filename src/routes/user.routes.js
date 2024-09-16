@@ -4,6 +4,8 @@ import { upload } from "../middleware/multer.middleware.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import { changeCurrentPassword } from "../controllers/user.controller.js";
 import { getCurrentUser } from "../controllers/user.controller.js";
+import { getUserChannelProfile } from "../controllers/user.controller.js";
+import { getWatchHistory } from "../controllers/user.controller.js";
 
 const router = Router()
 
@@ -31,6 +33,10 @@ router.put('/update-account', authMiddleware, updateAccountDetails);
 router.put('/update-avatar', authMiddleware, upload.single('avatar'), updateAvatar);
 
 router.put('/update-coverImage', authMiddleware, upload.single('coverImage'), updateCoverImage);
+
+router.get('/channel-profile/:username', authMiddleware, getUserChannelProfile);
+
+router.get('watch-history', authMiddleware, getWatchHistory);
 
 
 export default router;
