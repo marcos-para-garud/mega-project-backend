@@ -6,6 +6,8 @@ import { changeCurrentPassword } from "../controllers/user.controller.js";
 import { getCurrentUser } from "../controllers/user.controller.js";
 import { getUserChannelProfile } from "../controllers/user.controller.js";
 import { getWatchHistory } from "../controllers/user.controller.js";
+import { updateAccountDetails } from "../controllers/user.controller.js";
+import { updateAvatar } from "../controllers/user.controller.js";
 
 const router = Router()
 
@@ -26,7 +28,7 @@ router.post('/logout' , authMiddleware , logoutUser);
 
 router.post('/changePassword' , authMiddleware , changeCurrentPassword)
 
-router.get('getCurrentUser' , authMiddleware , getCurrentUser)
+router.get('/getCurrentUser' , authMiddleware , getCurrentUser)
 
 router.put('/update-account', authMiddleware, updateAccountDetails);
 
@@ -36,7 +38,7 @@ router.put('/update-coverImage', authMiddleware, upload.single('coverImage'), up
 
 router.get('/channel-profile/:username', authMiddleware, getUserChannelProfile);
 
-router.get('watch-history', authMiddleware, getWatchHistory);
+router.get('/watch-history', authMiddleware, getWatchHistory);
 
 
 export default router;
