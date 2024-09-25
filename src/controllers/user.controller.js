@@ -143,19 +143,7 @@ export const loginUser = asyncHandler( async(req , res)=>{
             fullname: user.fullname
         }
     })
-    // return res.cookie("accessToken" , accessToken, options)
-    // .cookie("refreshToken" , refreshToken, options)
-    // .json({
-    //     success: true,
-    //     message: "Login successful",
-    //     accessToken,
-    //     user: {
-    //         _id: user._id,
-    //         username: user.username,
-    //         email: user.email,
-    //         fullname: user.fullname,
-    //     }
-    // });
+   
 
 })
 

@@ -1,11 +1,10 @@
 import mongoose, {isValidObjectId} from "mongoose"
 import {User} from "../models/user.model.js"
-//import { Subscription } from "../models/subscription.model.js"
-//import { Subscription } from "../models/subscriber.model.js"
+
 import Subscription from "../models/subscriber.model.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
-//import {asyncHandler} from "../utils/asyncHandler.js"
+
 import asyncHandler from "../utils/asyncHandler.js"
 
 const toggleSubscription = asyncHandler(async (req, res) => {
@@ -53,12 +52,14 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const {channelId} = req.params
+    console.log('Received channelId:', channelId); // Debug log
     if(!isValidObjectId(channelId))
     {
         throw new apiError(404 , "channel does not exist")
     }
 
     const channel = await User.findById(channelId)
+    console.log('Channel found:', channel); // Debug log
 
     if (!channel) {
         throw new apiError(404, "Channel not found");

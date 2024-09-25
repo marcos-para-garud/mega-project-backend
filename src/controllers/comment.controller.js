@@ -1,108 +1,98 @@
-import mongoose from "mongoose"
+import mongoose, { isValidObjectId } from "mongoose"
 import {Comment} from "../models/comment.model.js"
 import apiError from "../utils/apiError.js"
-
-//import {asyncHandler} from "../utils/asyncHandler.js"
+//const { ObjectId } = require('mongodb');
+//import ObjectId from "mongodb"
 import asyncHandler from "../utils/asyncHandler.js"
 import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
 import apiResponse from "../utils/apiResponse.js"
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
+import { Like } from "../models/like.model.js"
 
 const getVideoComments = asyncHandler(async (req, res) => {
-    // Extract videoId from the request parameters and pagination info (page, limit) from query
-    const {videoId} = req.params;
-    const {page = 1, limit = 10} = req.query;
+    const { videoId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
 
-    // Find the video by its ID to make sure it exists
+    // Validate videoId format
+  
+    if(!isValidObjectId(videoId)){
+        return res.status(400).json(new apiResponse(400, null, "Invalid video ID format"));
+    }
+
     const video = await Video.findById(videoId);
     if (!video) {
-        // If the video doesn't exist, throw a 404 error
         throw new apiError(404, "Video does not exist");
     }
 
-    // Build the aggregation pipeline for fetching comments related to the video
     const commentAggregate = await Comment.aggregate([
+        { $match: { video: new mongoose.Types.ObjectId(videoId) } },
         {
-            // Match comments that are associated with the given videoId
-            $match: {
-                video: new mongoose.Types.ObjectId(videoId)
-            }
-        },
-        {
-            // Lookup the 'owner' field (the user who posted the comment) by referencing the 'User' collection
             $lookup: {
-                from: "User",
+                //from: "User",
+                from: "users",
                 localField: "owner",
                 foreignField: "_id",
                 as: "owner"
             }
         },
         {
-            // Lookup the 'Like' collection to fetch likes associated with each comment
             $lookup: {
-                from: "Like",
+                //from: "Like",
+                from: "likes",
                 localField: "_id",
                 foreignField: "comment",
                 as: "like"
             }
         },
         {
-            // Add additional fields to the results:
             $addFields: {
-                // Count the number of likes for each comment
-                likeCount: {
-                    $size: "$like"
-                },
-                // Take the first user from the 'owner' lookup result (since it's an array)
-                owner: {
-                    $first: "$owner"
-                },
-                // Check if the current user has liked the comment or not
+                likeCount: { $size: "$like" },
+                owner: { $first: "$owner" },
                 isLiked: {
                     $cond: {
-                        if: { $in: [req.user?._id, "$like.likeBy"] }, // Check if the user ID is in the array of people who liked the comment
-                        then: true,
+                       // if: { $in: [req.user?._id, "$like.likeBy"] },
+                      // if: { $in: [ new mongoose.Types.ObjectId(req.user?._id || ""), "$like.likeBy"] }, 
+                      if: {
+                        $and: [
+                            { $ne: [req.user?._id, null] }, // Ensure req.user is defined
+                            { $in: [new mongoose.Types.ObjectId(req.user._id), "$like.likedBy"] }
+                        ]
+                    },  
+                      then: true,
                         else: false
                     }
                 }
             }
         },
+        { $sort: { createdAt: -1 } },
         {
-            // Sort comments by creation date in descending order (most recent first)
-            $sort: {
-                createdAt: -1
-            }
-        },
-        {
-            // Project specific fields to be returned in the response
             $project: {
-                content: 1,            // Include the comment content
-                createdAt: 1,          // Include the creation date of the comment
-                likeCount: 1,          // Include the count of likes for each comment
-                owner: {               // Include owner details (username, fullName, avatar URL)
+                content: 1,
+                createdAt: 1,
+                likeCount: 1,
+                owner: {
                     username: 1,
                     fullName: 1,
                     "avatar.url": 1
                 },
-                isLiked: 1             // Include whether the comment is liked by the current user
+                isLiked: 1
             }
         }
     ]);
 
-    // Pagination options (page number and limit per page)
-    const option = {
-        page: parseInt(page, 10),     // Parse the 'page' from query as an integer
-        limit: parseInt(limit, 10)    // Parse the 'limit' from query as an integer
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10)
     };
 
-    // Use the aggregatePaginate method to apply pagination on the aggregation result
-    const comments = await Comment.aggregatePaginate(commentAggregate, option);
+    const comments = await Comment.aggregatePaginate(commentAggregate, options);
 
-    // Return the paginated comments in the response with a success message
-    return res
-        .status(200)
-        .json(new apiResponse(200, comments, "Comments fetched successfully"));
+    return res.status(200).json(new apiResponse(200, comments, "Comments fetched successfully"));
 });
+
+
+
 
 
 const addComment = asyncHandler(async (req, res) => {
@@ -162,23 +152,7 @@ const updateComment = asyncHandler(async (req, res) => {
 
 })
 
-// const deleteComment = asyncHandler(async (req, res) => {
-//     // TODO: delete a comment
-//     const {commentId} = req.params
-//     const _comment = await Comment.findById(commentId)
 
-//     if(!_comment)
-//     {
-//         throw new apiError(404 , "comment not found for deleting")
-//     }
-
-//     await _comment.remove();
-
-//     return res.status(200).json(
-//         new apiResponse(200, null, "Comment deleted successfully")
-//     );
-
-// })
 
 const deleteComment = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
@@ -198,7 +172,7 @@ const deleteComment = asyncHandler(async (req, res) => {
     }
 
     // Delete the comment
-    await comment.remove();
+    await comment.deleteOne();
 
     // Return a success response
     return res.status(200).json(

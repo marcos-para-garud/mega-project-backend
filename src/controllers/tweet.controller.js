@@ -3,7 +3,7 @@ import {Tweet} from "../models/tweet.model.js"
 import {User} from "../models/user.model.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
-//import {asyncHandler} from "../utils/asyncHandler.js"
+
 import asyncHandler from "../utils/asyncHandler.js"
 
 const createTweet = asyncHandler(async (req, res) => {
@@ -102,7 +102,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
         throw new apiError(404 , "only owner if this tweet can delete this")
     }
 
-    await tweet.remove()
+    await Tweet.findByIdAndDelete(tweetId)
 
     return res.status(200).json(
         new apiResponse(200, null, "Tweet deleted successfully")

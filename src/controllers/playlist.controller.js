@@ -2,14 +2,14 @@ import mongoose, {isValidObjectId} from "mongoose"
 import {Playlist} from "../models/playlist.model.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
-//import {asyncHandler} from "../utils/asyncHandler.js"
+
 import asyncHandler from "../utils/asyncHandler.js"
 
 const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body
 
     //TODO: create playlist
-    const {userId} = req.user._id
+    const userId = req.user._id
     if(!name || !description)
     {
         throw new apiError(404 , "name and description are required")
@@ -28,31 +28,34 @@ const createPlaylist = asyncHandler(async (req, res) => {
 
 })
 
+
+
 const getUserPlaylists = asyncHandler(async (req, res) => {
-    const {userId} = req.params
-    //TODO: get user playlists
-    if(!isValidObjectId(userId)){
-        throw new ApiError(400,"invalid user id");
+    const userId = req.params.userId;
+
+    // Validate the user ID
+    if (!isValidObjectId(userId)) {
+        throw new apiError(400, "Invalid user ID");
     }
 
     const userPlaylists = await Playlist.aggregate([
         {
-            $match : { 
-                owner :  new mongoose.Types.ObjectId(userId)
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
             }
         },
         {
-            $lookup : {
-                from :"videos",
+            $lookup: {
+                from: "videos",
                 localField: "videos",
                 foreignField: "_id",
                 as: "videos"
             }
         },
         {
-            $addFields : {
-                totalVideos : { $size : "videos" },
-                totalViews: { $sum : "$videos.views"}
+            $addFields: {
+                totalVideos: { $size: "$videos" },
+                totalViews: { $sum: "$videos.views" }
             }
         },
         {
@@ -65,9 +68,20 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
                 updatedAt: 1
             }
         }
-    ])
+    ]);
+
+    // Check if playlists were found
+    if (!userPlaylists.length) {
+        throw new apiError(404, "No playlists found for the user");
+    }
+
+    // Log data for debugging
+    console.log('User Playlists:', userPlaylists);
+    console.log('Response Status:', 200, 'Response Data:', userPlaylists);
+
+    // Send a proper HTTP response with status code 200
     return res.status(200).json(new apiResponse(200, userPlaylists, "User playlists fetched successfully"));
-})
+});
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
@@ -177,6 +191,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     }
 
     const playlist = await Playlist.findById(playlistId)
+    console.log('Fetched Playlist:', playlist);
 
     if(!playlist)
     {
@@ -190,7 +205,9 @@ const deletePlaylist = asyncHandler(async (req, res) => {
         throw new apiError(403, "You are not authorized to delete this playlist");
     }
 
-    await playlist.remove()
+    //await playlist.remove()
+
+    await Playlist.deleteOne({ _id: playlistId });
 
     return res.status(200).json(new apiResponse(200, null, "Playlist deleted successfully"));
 })

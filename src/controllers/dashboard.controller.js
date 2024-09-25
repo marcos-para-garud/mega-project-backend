@@ -1,10 +1,10 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import {Video} from "../models/video.model.js"
-//import {Subscription} from "../models/subscription.model.js"
+
 import Subscription from "../models/subscriber.model.js"
 
 import {Like} from "../models/like.model.js"
-//import {asyncHandler} from "../utils/asyncHandler.js"
+
 import asyncHandler from "../utils/asyncHandler.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
@@ -23,7 +23,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     const totalViewsResult = await Video.aggregate([
         {
-            $match: {owner: mongoose.Types.ObjectId(channelId) }
+            $match: {owner:new mongoose.Types.ObjectId(channelId) }
         },
         {
             $group:{
@@ -40,12 +40,12 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     const totalLikesResult = await Video.aggregate([
         {
-            $match: { owner: mongoose.Types.ObjectId(channelId) }
+            $match: { owner: new mongoose.Types.ObjectId(channelId) }
         },
         {
             $group: {
                 _id: null,
-                totalLikes: { $sum: { $size: "$likes" } }
+                totalLikes: {  $sum: { $size: { $ifNull: ["$likes", []] } } }
             }
         }
     ]);
@@ -69,10 +69,16 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     // TODO: Get all the videos uploaded by the channel
     const {channelId} = req.params
 
+    if (!mongoose.Types.ObjectId.isValid(channelId)) {
+        throw new apiError(400, "Invalid Channel ID");
+    }
+
     const user = await User.findById(channelId);
     if (!user) {
         throw new apiError(404, "Channel not found");
     }
+
+    console.log("channelId:", channelId);
 
     const videos = await Video.find({ owner: channelId });
 

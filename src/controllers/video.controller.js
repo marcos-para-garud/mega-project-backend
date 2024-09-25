@@ -44,22 +44,43 @@ const getAllVideos = asyncHandler(async (req, res) => {
     });
 })
 
-const publishAVideo = asyncHandler(async (req, res) => {
-    const { title, description} = req.body
-    // TODO: get video, upload to cloudinary, create video
-    if(!(title || description || req.file))
-    {
-        throw new apiError(400, "Title, description, and video file are required");
-    }
-    const videoFilePath = req.file.path
-    const uploadResponse = await uploadOnCloudinary(videoFilePath)
 
+const publishAVideo = asyncHandler(async (req, res) => {
+    const { title, description } = req.body;
+
+    // Ensure all required fields are provided
+    if (!(title && description && req.files)) {
+        throw new apiError(400, "Title, description, video file, and thumbnail are required");
+    }
+
+    // Ensure the video file exists
+    if (!req.files.videoFile || req.files.videoFile.length === 0) {
+        throw new apiError(400, "Video file is required");
+    }
+
+    // Ensure the thumbnail exists
+    if (!req.files.thumbNail || req.files.thumbNail.length === 0) {
+        throw new apiError(400, "Thumbnail is required");
+    }
+
+    // Handle the video file upload
+    const videoFilePath = req.files.videoFile[0].path;
+    const uploadResponse = await uploadOnCloudinary(videoFilePath);
     if (!uploadResponse) {
         throw new apiError(500, "Failed to upload video to Cloudinary");
     }
 
+    // Handle the thumbnail upload
+    const thumbNailFilePath = req.files.thumbNail[0].path;
+    const thumbNailUploadResponse = await uploadOnCloudinary(thumbNailFilePath);
+    if (!thumbNailUploadResponse) {
+        throw new apiError(500, "Failed to upload thumbnail to Cloudinary");
+    }
+
+    // Create the new video entry
     const newVideo = await Video.create({
-        videoFile: uploadResponse.url, // Cloudinary URL
+        videoFile: uploadResponse.url, // Cloudinary URL for video
+        thumbNail: thumbNailUploadResponse.url, // Cloudinary URL for thumbnail
         title,
         description,
         duration: req.body.duration || 0, // Assuming duration can be provided in the body
@@ -67,8 +88,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
     });
 
     return res.status(201).json(new apiResponse(201, newVideo, "Video published successfully"));
+});
 
-})
+
+
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
@@ -137,7 +160,9 @@ const deleteVideo = asyncHandler(async (req, res) => {
         if (!video) {
             throw new apiError(404, "Video not found");
         }
-        await video.remove();
+     
+        await Video.findByIdAndDelete(videoId);
+
 
         return res.status(200).json(new apiResponse(200, {}, "Video deleted successfully"));
 
