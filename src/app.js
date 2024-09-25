@@ -1,26 +1,3 @@
-// import express, { urlencoded } from "express"
-// import cors from "cors"
-// import cookieParser from "cookie-parser"
-// import userRouter from "./routes/user.routes.js"
-
-// const app = express()
-
-// app.use(cors());
-
-// app.use(express.json());
-
-// app.use(express.urlencoded());
-
-// app.use(express.static("public"));
-
-// app.use(cookieParser());
-
-// app.use('/api/v1/users' , userRouter);
-
-// export default app;
-
-
-
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
@@ -61,5 +38,9 @@ app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 
 // http://localhost:8000/api/v1/users/register
+
+app.get('/', (req , res)=>{
+    res.send("Welcome to vid-tweet");
+})
 
 export default app
