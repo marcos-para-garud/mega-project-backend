@@ -36,12 +36,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 as: "ownerDetails"
             }
         },
-        {
-            $unwind: {
-                path: "$ownerDetails",
-                preserveNullAndEmptyArrays: true
-            }
-        },
+       
         {
             $project: {
                 content: 1,
