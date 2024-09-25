@@ -10,89 +10,61 @@ import apiResponse from "../utils/apiResponse.js"
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
 import { Like } from "../models/like.model.js"
 
+
+
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
-    // Validate videoId format
-  
-    if(!isValidObjectId(videoId)){
-        return res.status(400).json(new apiResponse(400, null, "Invalid video ID format"));
+    // Validate videoId
+    if (!isValidObjectId(videoId)) {
+        return next(apiError.badRequest("Invalid video ID"));
     }
 
-    const video = await Video.findById(videoId);
-    if (!video) {
-        throw new apiError(404, "Video does not exist");
-    }
-
-    const commentAggregate = await Comment.aggregate([
-        { $match: { video: new mongoose.Types.ObjectId(videoId) } },
+    // Aggregate comments for the specified video
+    const aggregate = Comment.aggregate([
+        {
+            $match: {
+                video:new mongoose.Types.ObjectId(videoId) // Match comments for the specific video
+            }
+        },
         {
             $lookup: {
-                //from: "User",
-                from: "users",
+                from: "users", // Assuming "users" is the collection name for User model
                 localField: "owner",
                 foreignField: "_id",
-                as: "owner"
+                as: "ownerDetails"
             }
         },
         {
-            $lookup: {
-                //from: "Like",
-                from: "likes",
-                localField: "_id",
-                foreignField: "comment",
-                as: "like"
+            $unwind: {
+                path: "$ownerDetails",
+                preserveNullAndEmptyArrays: true
             }
         },
-        {
-            $addFields: {
-                likeCount: { $size: "$like" },
-                owner: { $first: "$owner" },
-                isLiked: {
-                    $cond: {
-                       // if: { $in: [req.user?._id, "$like.likeBy"] },
-                      // if: { $in: [ new mongoose.Types.ObjectId(req.user?._id || ""), "$like.likeBy"] }, 
-                      if: {
-                        $and: [
-                            { $ne: [req.user?._id, null] }, // Ensure req.user is defined
-                            { $in: [new mongoose.Types.ObjectId(req.user._id), "$like.likedBy"] }
-                        ]
-                    },  
-                      then: true,
-                        else: false
-                    }
-                }
-            }
-        },
-        { $sort: { createdAt: -1 } },
         {
             $project: {
                 content: 1,
                 createdAt: 1,
-                likeCount: 1,
-                owner: {
-                    username: 1,
-                    fullName: 1,
-                    "avatar.url": 1
-                },
-                isLiked: 1
+                "ownerDetails.name": 1, // Include the owner's name
+                "ownerDetails.avatar": 1 // Include the owner's avatar if available
             }
         }
     ]);
 
+    // Paginate the results
     const options = {
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10)
+        page: parseInt(page),
+        limit: parseInt(limit)
     };
 
-    const comments = await Comment.aggregatePaginate(commentAggregate, options);
+    const comments = await Comment.aggregatePaginate(aggregate, options);
 
-    return res.status(200).json(new apiResponse(200, comments, "Comments fetched successfully"));
+    
+    return res
+        .status(200)
+        .json(new apiResponse(200, comments, "Comments fetched successfully"));
 });
-
-
-
 
 
 const addComment = asyncHandler(async (req, res) => {
