@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Video Tweet - A Social Media Platform
 
 Description
@@ -145,3 +146,6 @@ Acknowledgments
 Node.js, Express.js, MongoDB, React, and Docker for providing the essential technologies.
 Jenkins for CI/CD automation.
 Render for cloud hosting and deployment.
+=======
+
+>>>>>>> 90f21bb1560d9f4f0676c2870a6fe81728c255ef
