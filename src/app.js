@@ -40,7 +40,7 @@ app.use("/api/v1/dashboard", dashboardRouter)
 // http://localhost:8000/api/v1/users/register
 
 app.get('/', (req , res)=>{
-    res.send("Welcome to vid-tweet for functionality routes check github link of this project");
+    res.send("Welcome to vid-tweet : Docker and ci/cd pipeline with jenkins included and for functionality routes check github link of this project");
 })
 
 export default app
