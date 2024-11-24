@@ -6,10 +6,9 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-     "build": "echo \"No build step required\" && exit 0",
-     "test": "echo \"No tests specified\" && exit 0"
-   },
-
+    "build": "echo \"No build step required\" && exit 0",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
   "author": "",
   "license": "ISC",
   "description": "",
@@ -17,6 +16,7 @@
     "prettier": "^3.3.3"
   },
   "dependencies": {
+    "amqplib": "^0.10.4",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.4.0",
     "cookie-parser": "^1.4.6",
