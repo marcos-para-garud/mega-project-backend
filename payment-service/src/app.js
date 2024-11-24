@@ -17,6 +17,6 @@ listenForPayments();
 
 
 app.listen(PORT , ()=>{
-    console.log(`payment service on port ${PORT}`);
+    console.log(`payment service on port ${PORT} and ci/cd working`);
     
 })
