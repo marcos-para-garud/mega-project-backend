@@ -3,7 +3,7 @@ import { processPayment } from '../controller/paymentController.js'
 
 export const listenForPayments = async()=>{
     try {
-        const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://localhost');
+        const connection = await amqp.connect(process.env.RABBITMQ_URI || 'amqp://host.docker.internal:5673');
         const channel =await connection.createChannel();
         const queue = 'paymentQueue';
 

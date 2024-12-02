@@ -2,7 +2,7 @@ import amqp from 'amqplib'
 
 export const sendPaymentRequest = async(paymentData)=>{
     try {
-        const connection = await amqp.connect('amqp://localhost');
+        const connection = await amqp.connect(process.env.RABBITMQ_URI);
         const channel = await connection.createChannel();
         const queue = 'paymentQueue';
 

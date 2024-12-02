@@ -14,9 +14,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 listenForPayments();
+app.get("/" , (req , res)=>{
+    res.send("payment service is running ");
+})
 
-
-app.listen(PORT , ()=>{
+app.listen(PORT ,'0.0.0.0', ()=>{
     console.log(`payment service on port ${PORT} and ci/cd working-1`);
     
 })
