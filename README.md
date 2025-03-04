@@ -5,10 +5,13 @@
 # Video Tweet - A Social Media Platform
 
 ## Description
-Video Tweet is a platform where users can upload and share videos, tweet, like, and comment on content, create playlists, and follow channels. This project integrates Docker, Jenkins for CI/CD, and is deployed on Render. The application follows the MERN stack (MongoDB, Express, React, Node.js) and is structured with a microservices architecture.
+Video Tweet is a platform where users can upload and share videos, tweet, like, and comment on content, create playlists, and follow channels. This project integrates Docker, Jenkins for CI/CD, and is deployed on Render. The application follows the MERN stack (MongoDB, Express, React, Node.js) and is structured with a microservices architecture. And also it has Real 
+time Notification system and Stripe payment gateway microservices.
 
 ## Features
 - **User Authentication**: Register, log in, and manage user profiles.
+- **Notification System**: Users receive updates on likes, comments, subscriptions, and payments.
+- **Payment Gateway**: Secure payments and payouts for video creators.
 - **Tweeting**: Create, update, and delete tweets.
 - **Video Upload**: Upload videos, manage their details (e.g., thumbnail, publishing status), and like/dislike them.
 - **Commenting**: Add, edit, and delete comments on videos.
@@ -26,6 +29,7 @@ Video Tweet is a platform where users can upload and share videos, tweet, like, 
 - **JWT Authentication**: Secure access to user routes.
 - **Multer**: Handling file uploads (avatars, cover images, videos, thumbnails).
 - **Cloudinary**: Cloud-based platform for uploading photos and videos.
+- **Stripe**: For handeling payment gateway.
 
 ## Setup & Installation
 
